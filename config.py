@@ -4,7 +4,7 @@ ENDPOINTS = [{
     'class': 'biyuya.api.expenses.Expenses',
     'urls': [
         '/expenses',
-        '/expenses/<string:ds>'
+        '/expenses/<string:ids>'
     ]}
 ]
 

@@ -37,27 +37,46 @@ class BaseModel(ObjectDict):
         raise NotImplementedError()
 
     @classmethod
-    def _collection(cls):
+    def collection(cls):
         return cls.db[cls.collection_name]
 
     @classmethod
     def add(cls, doc):
-        cls._collection().insert_one(doc)
+        cls.collection().insert_one(doc)
 
     @classmethod
     def upsert(cls, *docs):
         for d in docs:
-            cls._collection().replace_one({'_id': d.id}, d, upsert=True)
+            cls.collection().replace_one({'_id': d.id}, d, upsert=True)
 
     @classmethod
-    def delete(cls, *docs):
-        cls._collection().delete_many(docs)
+    def delete(cls, *doc_ids):
+        for did in doc_ids:
+            cls.collection().delete_one({'_id': did})
 
     @classmethod
     def all(cls):
-        for d in cls._collection().find({'type': cls.type}):
+        for d in cls.collection().find({'type': cls.type}):
+            yield cls._build_entity(d)
+
+    @classmethod
+    def by_attr(cls, attr, value, exact=True, many=True, limit=0):
+        if exact or type(value) is not str:
+            params = {attr: value}
+        else:
+            params = {attr: {"$regex": '.*?{}.*?'.format(value), "$options": 'si'}}
+
+        if many:
+            for d in cls.collection().find(params, limit=limit):
+                yield cls._build_entity(d)
+        else:
+            yield cls._build_entity(cls.collection().find_one(params))
+
+    @classmethod
+    def by_multiple_conditions(cls, conditions):
+        for d in cls.collection().find(conditions):
             yield cls._build_entity(d)
 
     @classmethod
     def by_id(cls, id):
-        return cls._build_entity(cls._collection().find_one({'_id': id}))
+        return next(cls.by_attr('_id', id, many=False))

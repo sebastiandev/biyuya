@@ -10,8 +10,10 @@ class BaseResource(Resource):
     PAGE_SIZE_ARG = 'page[size]'
     SORT_ARG = 'sort'
 
+    FILTERS = []
+
     def __init__(self, *args, **kwargs):
-        super(BaseResource, self).__init__()
+        super(BaseResource).__init__()
         self._base_url = request.base_url
         self._api_url = request.url_root + 'api'
         self._db = kwargs.get('database')
@@ -22,11 +24,21 @@ class BaseResource(Resource):
         self._parser.add_argument(self.PAGE_SIZE_ARG, type=int, dest='page_size')
         self._parser.add_argument(self.SORT_ARG, type=str)
 
-        self._args = None
-        self._parse_params()
+        for filter_def in self.FILTERS:
+            self._parser.add_argument('filter[{}]'.format(filter_def['name']),
+                                      type=filter_def['type'],
+                                      dest=filter_def['alias'])
 
-    def _parse_params(self):
         self._args = self._parser.parse_args()
+
+    @property
+    def requested_filters(self):
+        args = dict(self._args)
+        args.pop('include')
+        args.pop('page_number')
+        args.pop('page_size')
+        args.pop('sort')
+        return reqparse.Namespace(**args)
 
     def base_url_without_params(self, params):
         return self._base_url.replace('/' + params, '')

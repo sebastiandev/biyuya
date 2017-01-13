@@ -23,5 +23,9 @@ class Account(BaseModel):
 
     @classmethod
     def by_name(cls, name):
-        return cls._build_entity(cls._collection().find_one({'name': name}))
+        return next(cls.by_attr('name', name, many=False))
+
+    @classmethod
+    def by_currency(cls, currency):
+        return cls.by_attr('currency', currency)
 

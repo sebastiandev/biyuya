@@ -1,4 +1,5 @@
 from . import BaseModel, ObjectDict
+from .filters import TagFilter, AccountFilter, DateRangeFilter
 
 
 class ExpenseFactory(object):
@@ -50,35 +51,22 @@ class Expense(BaseModel):
         return ExpenseFactory.build(doc)
 
     @classmethod
-    def by_account(cls, account_name):
-        for d in cls._collection().find({
-            'account': {
-                "$regex": '/.*?{}.*?/i'.format(account_name),
-                "$options": 's'
-            }
-        }):
+    def by_account(cls, account_name, limit=0):
+        for d in AccountFilter.apply(cls, account_name, limit=limit):
             yield cls._build_entity(d)
 
     @classmethod
-    def by_date(cls, date):
-        for d in cls._collection().find({'date': date}):
+    def by_date(cls, date, limit=0):
+        return cls.by_attr('date', date, limit=limit)
+
+    @classmethod
+    def by_date_range(cls, from_date, to_date, limit=0):
+        for d in DateRangeFilter.apply(cls, from_date, to_date, limit=limit):
             yield cls._build_entity(d)
 
     @classmethod
-    def by_date_range(cls, from_date, to_date):
-        for d in cls._collection().find({'date': {"$gte": from_date, "$lte": to_date}}):
-            yield cls._build_entity(d)
-
-    @classmethod
-    def by_tag(cls, *tags):
-        for d in cls._collection().find({
-            'tags': {
-                "$elemMatch": {
-                    "$regex": '/.*?{}.*?/i'.format('|'.join(tags)),
-                    "$options": 's'
-                }
-            }
-        }):
+    def by_tag(cls, *tags, limit=0):
+        for d in TagFilter.apply(cls, *tags, limit=limit):
             yield cls._build_entity(d)
 
 
@@ -119,7 +107,7 @@ class MonthlyExpense(Expense):
 
     @classmethod
     def pending_expenses(cls):
-        res = cls._collection().aggregate([{
+        res = cls.collection().aggregate([{
             "$match": {
                 'total_months': {"$gte": 1}
             }
@@ -143,4 +131,4 @@ class MonthlyExpense(Expense):
         }])
 
         for r in res:
-            yield cls._build_entity(cls._collection().find_one({'_id': r['_id']}))
+            yield cls._build_entity(next(cls.by_attr('_id', r['_id'])))
