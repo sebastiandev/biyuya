@@ -1,6 +1,13 @@
+import datetime
 
 
-class AttributeFilter(object):
+class BaseFilter(object):
+    # TODO: Move this class to be part of API FiltrableResource
+    #       Leaving implementation to be defined by base class
+
+    name = None
+    value_type = None
+    allow_multiple = None
 
     @classmethod
     def condition(cls, *args, **kwargs):
@@ -8,17 +15,36 @@ class AttributeFilter(object):
 
     @classmethod
     def apply(cls, model, *args, **kwargs):
-        return model.collection().find(cls.condition(*args, **kwargs), limit=kwargs.get('limit', 0))
+        return model.find(cls.condition(*args, **kwargs), limit=kwargs.get('limit', 0))
 
 
-class DateRangeFilter(AttributeFilter):
+class DateFilter(BaseFilter):
+
+    name = 'date'
+    value_type = str
+    allow_multiple = False
+
+    @classmethod
+    def condition(cls, date_value, **kwargs):
+        return {'date': date_value}
+
+
+class DateRangeFilter(BaseFilter):
+
+    name = 'date_range'
+    value_type = datetime.datetime
+    allow_multiple = True
 
     @classmethod
     def condition(cls, from_date, to_date, **kwargs):
         return {'date': {"$gte": from_date, "$lte": to_date}}
 
 
-class AccountFilter(AttributeFilter):
+class AccountFilter(BaseFilter):
+
+    name = 'account_name'
+    value_type = str
+    allow_multiple = False
 
     @classmethod
     def condition(cls, account_name):
@@ -30,7 +56,27 @@ class AccountFilter(AttributeFilter):
         }
 
 
-class TagFilter(AttributeFilter):
+class NameFilter(BaseFilter):
+
+    name = 'name'
+    value_type = str
+    allow_multiple = False
+
+    @classmethod
+    def condition(cls, name):
+        return {
+            'name': {
+                "$regex": '.*?{}.*?'.format(name),
+                "$options": 'si'
+            }
+        }
+
+
+class TagFilter(BaseFilter):
+
+    name = 'tag'
+    value_type = str
+    allow_multiple = True
 
     @classmethod
     def condition(cls, *tags, **kwargs):

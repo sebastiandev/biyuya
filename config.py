@@ -1,10 +1,16 @@
 # API CONF
 ENDPOINTS = [{
-    'name': 'cis',
+    'name': 'expenses',
     'class': 'biyuya.api.expenses.Expenses',
     'urls': [
         '/expenses',
         '/expenses/<string:ids>'
+    ]}, {
+    'name': 'accounts',
+    'class': 'biyuya.api.accounts.Accounts',
+    'urls': [
+        '/accounts',
+        '/accounts/<string:ids>'
     ]}
 ]
 

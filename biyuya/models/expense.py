@@ -51,6 +51,14 @@ class Expense(BaseModel):
         return ExpenseFactory.build(doc)
 
     @classmethod
+    def find(cls, condition, **kwargs):
+        """Need to override in order to look for all types of expenses instead of just the model"""
+        condition.update({'type': {"$in": [cls.type, MonthlyExpense.type]}})
+
+        for d in cls.collection().find(condition, **kwargs):
+            yield cls._build_entity(d)
+
+    @classmethod
     def by_account(cls, account_name, limit=0):
         for d in AccountFilter.apply(cls, account_name, limit=limit):
             yield cls._build_entity(d)

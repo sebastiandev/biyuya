@@ -55,6 +55,13 @@ class BaseModel(ObjectDict):
             cls.collection().delete_one({'_id': did})
 
     @classmethod
+    def find(cls, condition, **kwargs):
+        condition.update({'type': cls.type})
+
+        for d in cls.collection().find(condition, **kwargs):
+            yield cls._build_entity(d)
+
+    @classmethod
     def all(cls):
         for d in cls.collection().find({'type': cls.type}):
             yield cls._build_entity(d)
@@ -71,11 +78,6 @@ class BaseModel(ObjectDict):
                 yield cls._build_entity(d)
         else:
             yield cls._build_entity(cls.collection().find_one(params))
-
-    @classmethod
-    def by_multiple_conditions(cls, conditions):
-        for d in cls.collection().find(conditions):
-            yield cls._build_entity(d)
 
     @classmethod
     def by_id(cls, id):
