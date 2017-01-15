@@ -6,6 +6,7 @@ from .response import ResponseFactory
 class BaseResource(Resource):
 
     model = None
+    serializer = None
     filters = []
 
     INCLUDE_ARG = 'include'
@@ -31,6 +32,9 @@ class BaseResource(Resource):
                                       type=filter_cls.value_type)
 
         self._args = self._parser.parse_args()
+
+    def _serialize(self, data):
+        raise NotImplementedError()
 
     @property
     def requested_filters(self):
@@ -94,10 +98,12 @@ class BaseResource(Resource):
         else:
             data = self.get_all()
 
+        data = self.serializer.serialize(data)
+
         return self.build_response(data=data, included=included, meta=meta).data()
 
     def get_by_ids(self, ids):
-        return self.model.by_id(ids[0])
+        return list(self.model.by_id(ids[0]))
 
     def get_by_filters(self, filters):
         # TODO: move filter parsing and loading to a separate module, maybe FiltrableResource

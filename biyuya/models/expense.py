@@ -30,7 +30,7 @@ class ExpenseFactory(object):
 
 class Expense(BaseModel):
 
-    type = 'plain_expense'
+    type = 'expense'
     collection_name = 'expenses'
 
     def __init__(self, date=None, amount=0, tags=None, account=None, notes=None, **kwargs):
@@ -52,8 +52,8 @@ class Expense(BaseModel):
 
     @classmethod
     def find(cls, condition, **kwargs):
-        """Need to override in order to look for all types of expenses instead of just the model"""
-        condition.update({'type': {"$in": [cls.type, MonthlyExpense.type]}})
+        """Need to override in order to look for all types of expenses"""
+        condition.update({'type': {"$regex": ".*?{}.*?".format(cls.type), "$options": 'si'}})
 
         for d in cls.collection().find(condition, **kwargs):
             yield cls._build_entity(d)

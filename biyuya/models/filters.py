@@ -1,4 +1,14 @@
 import datetime
+import arrow
+
+
+def arrow_datetime(value, name):
+    try:
+        value = arrow.get(value).datetime
+    except Exception as e:
+        raise ValueError(e)
+
+    return value
 
 
 class BaseFilter(object):
@@ -21,7 +31,7 @@ class BaseFilter(object):
 class DateFilter(BaseFilter):
 
     name = 'date'
-    value_type = str
+    value_type = arrow_datetime
     allow_multiple = False
 
     @classmethod
@@ -32,7 +42,7 @@ class DateFilter(BaseFilter):
 class DateRangeFilter(BaseFilter):
 
     name = 'date_range'
-    value_type = datetime.datetime
+    value_type = arrow_datetime
     allow_multiple = True
 
     @classmethod

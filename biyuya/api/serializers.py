@@ -1,63 +1,68 @@
+from flask_restful import fields, marshal
+from ..models.expense import Expense
 
 
-class JSONSerializer(object):
+class ModelSerializer(object):
 
-    fields = {}
+    output = None
+    input = None
 
-    def serialize(self, model):
-        data = {}
-        for name, field_type in self.fields.items():
-            if field_type == list:
-                data[name] = [str(e) for e in model.get(name)]
+    @classmethod
+    def serialize(cls, data):
+        return marshal(data, cls.output)
 
-            # No support for embedded collection of collection. Only one level
-            elif type(field_type) is list:
-                element_list = model.get(name)
-                list_data = []
 
-                for e_name, e_type in field_type.items():
-                    for e in element_list:
-                        list_data.append({e.get(e_name): e_type(e)})
+class PlainExpenseSerializer(ModelSerializer):
 
-                data[name] = list_data
+    output = {
+        'date': fields.DateTime(dt_format='iso8601'),
+        'amount': fields.Float(),
+        'tags': fields.List(fields.String),
+        'account': fields.String(),
+        'note': fields.String()
+    }
 
+
+class MonthlyExpenseSerializer(ModelSerializer):
+
+    months_serializer = {
+        'month': fields.Integer(),
+        'amount': fields.Integer()
+    }
+
+    output = {
+        'date': fields.DateTime(dt_format='iso8601'),
+        'amount': fields.Float(),
+        'tags': fields.List(fields.String),
+        'account': fields.String(),
+        'note': fields.String(),
+        'months': fields.List(fields.Nested(months_serializer)),
+        'total_months': fields.Integer()
+    }
+
+
+class ExpenseSerializer(ModelSerializer):
+
+    @classmethod
+    def serialize(cls, data):
+        res = []
+        for d in data if type(data) is list else [data]:
+            if d.type == Expense.type:
+                serializer = PlainExpenseSerializer.output
             else:
-                data[name] = field_type(model.get(name))
+                serializer = MonthlyExpenseSerializer.output
 
-        return data
+            res.append(marshal(d, serializer))
+
+        return res
 
 
-class ExpenseSerializer(JSONSerializer):
+class AccountSerializer(ModelSerializer):
 
-    fields = {
-        'date': str,
-        'amount': int,
-        'tags': list,
-        'account': str,
-        'note': str
+    output = {
+        'name': fields.String(),
+        'currency': fields.String(),
+        'note': fields.String(),
     }
 
 
-class MonthlyExpenseSerializer(JSONSerializer):
-
-    fields = {
-        'date': str,
-        'amount': int,
-        'tags': list,
-        'account': str,
-        'note': str,
-        'months': [{
-            'month': int,
-            'amount': int
-        }],
-        'total_months': int
-    }
-
-
-class AccountSerializer(JSONSerializer):
-
-    fields = {
-        'name': str,
-        'currency': str,
-        'note': str
-    }

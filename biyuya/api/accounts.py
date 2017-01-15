@@ -1,11 +1,13 @@
 from .base import BaseResource
 from ..models.account import Account
 from ..models.filters import NameFilter
+from .serializers import AccountSerializer
 
 
 class Accounts(BaseResource):
 
     model = Account
+    serializer = AccountSerializer
     filters = [NameFilter]
 
     def post(self):

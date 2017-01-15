@@ -1,7 +1,8 @@
-from biyuya.models.expense import ExpenseFactory, Expense
-from biyuya.models.account import Account
 import csv
 import json
+from biyuya.models.expense import ExpenseFactory, Expense
+from biyuya.models.account import Account
+import arrow
 
 
 if __name__ == '__main__':
@@ -24,7 +25,7 @@ if __name__ == '__main__':
                 imported_accounts += 1
 
             doc = {
-                'date': row['Date'],
+                'date': arrow.get(row['Date']).datetime,
                 'account': row['Account'],
                 'amount': row['Amount'],
                 'tags': row['Tags'].split(','),

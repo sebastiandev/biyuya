@@ -74,7 +74,7 @@ class BaseModel(ObjectDict):
             params = {attr: {"$regex": '.*?{}.*?'.format(value), "$options": 'si'}}
 
         if many:
-            for d in cls.collection().find(params, limit=limit):
+            for d in cls.find(params, limit=limit):
                 yield cls._build_entity(d)
         else:
             yield cls._build_entity(cls.collection().find_one(params))
